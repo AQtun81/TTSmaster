@@ -124,6 +124,9 @@ function AddRegion(start = 0.0, end = 0.1) {
 
   surfers[activeSurfer].options.plugins[0].on('region-out', (region) => {
     if (isFullPlayback) {
+      if (surfers[activeSurfer].media.currentTime + 0.02 < region.end) {
+        return;
+      }
       surfers[activeSurfer].media.pause();
       FullPlaybackNext();
       return;
@@ -197,7 +200,7 @@ window.addEventListener("keydown", (e) => {
   if (surfers[activeSurfer].plugins[0].regions.length > 0) {
     surfers[activeSurfer].plugins[0].regions[0].play();
   } else {
-    surfers[activeSurfer].media.currentTime = 0
+    surfers[activeSurfer].media.currentTime = 0;
     surfers[activeSurfer].media.play();
   }
   isFullPlayback = true;
@@ -214,7 +217,7 @@ function FullPlaybackNext() {
   if (surfers[activeSurfer].plugins[0].regions.length > 0) {
     surfers[activeSurfer].plugins[0].regions[0].play();
   } else {
-    surfers[activeSurfer].media.currentTime = 0
+    surfers[activeSurfer].media.currentTime = 0;
     surfers[activeSurfer].media.play();
   }
 }
