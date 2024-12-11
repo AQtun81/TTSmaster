@@ -16,7 +16,12 @@ async function UpdateSoundList() {
   const response = await fetch("audio/list.txt");
   if (response.ok) {
     var text = await response.text();
-    soundList = text.split('\r\n');
+    if (text.includes('\r\n')) {
+      soundList = text.split('\r\n');
+    } else {
+      soundList = text.split('\n');
+    }
+    
     soundList.forEach(e => {
       var newOption = document.createElement("option");
       newOption.value = e;
