@@ -104,6 +104,13 @@ function AddSurfer(audioPath = "audio/sounds/soulbitch.mp3") {
 }
 
 function AddRegion(start = 0.0, end = 0.1) {
+
+  if (start > end) {
+    var temp = start;
+    start = end;
+    end = temp;
+  }
+
   if (surfers[activeSurfer].options.plugins[0].regions.length > 0) return;
   surfers[activeSurfer].options.plugins[0].addRegion({
     start: start,
