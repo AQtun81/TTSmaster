@@ -45,10 +45,14 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
 }
 
-#waveform ::part(region-handle-right) {
-    border-right-width: 4px !important;
-    border-right-color: #000 !important;
-  }
+#surfers ::part(region-handle-right),
+#surfers ::part(region-handle-left) {
+    border-color: #AAA;
+}
+
+#surfers ::part(region) {
+    background-color: #77777744;
+}
 
 /* Add-bar style
 ------------------------------------------------------------------ */
@@ -75,15 +79,57 @@ h1, h2, h3, h4, h5, h6 {
 ------------------------------------------------------------------ */
 
 #rows div {
+    display: flex;
     height: 50px;
-    padding: 5px;
-    margin: 5px;
+    margin: 10px 0;
     border-radius: 5px;
-    background-color: #333;
+    transition-duration: 0.1s;
+    transform: scale(0.975);
 }
 
 #rows div.active {
+    transform: scale(1);
+}
+
+#rows div.active h5 {
     background-color: var(--accent-color);
+}
+
+#rows > div > * {
+    background-color: #333;
+    border-radius: 5px;
+    padding: 0;
+    margin: 0;
+    margin-right: 5px;
+    height: 100%;
+}
+
+#rows > div > *:last-child {
+    margin-right: 0;
+}
+
+#rows > div h5 {
+    display: flex;
+    flex: 1;
+    padding-left: 5px;
+    align-items: center;
+    transition-duration: 0.1s;
+}
+
+#rows > div button {
+    display: flex;
+    padding: 0;
+    aspect-ratio: 1;
+    margin: 0;
+    border: 0;
+    background-image: url("../icon/delete.svg");
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#rows > div button:hover {
+    background-color: #bf451a;
 }
 
 /* command result style
@@ -97,5 +143,26 @@ h1, h2, h3, h4, h5, h6 {
     height: 80px;
     padding: 5px;
     border-radius: 5px;
+    background-color: #333;
+}
+
+#commandResultToast {
+    position: fixed;
+    bottom: 90px;
+    left: 0;
+    right: 0;
+    height: 40px;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #0000;
+    transition-duration: 0.1s;
+    transform: translateY(calc(50% + 10px)) scale(0.0);
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+#commandResultToast.visible {
+    transform: translateY(0px) scale(1.0);
     background-color: #333;
 }

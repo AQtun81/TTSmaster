@@ -1,3 +1,4 @@
+const baseUrl = "https://tkap1.github.io/";
 const surfersContainer = document.getElementById("surfers");
 const rowsContainer = document.getElementById("rows");
 const soundnameContainer = document.getElementById("soundname");
@@ -13,13 +14,20 @@ var lastCreatedRegion;
 var isFullPlayback = false;
 
 async function UpdateSoundList() {
-  const response = await fetch("audio/list.txt");
+  const response = await fetch(`${baseUrl}list.txt`);
   if (response.ok) {
     var text = await response.text();
     if (text.includes('\r\n')) {
       soundList = text.split('\r\n');
     } else {
       soundList = text.split('\n');
+    }
+
+    // remove all empty strings
+    var index = soundList.findIndex((e) => e == '');
+    while (index > -1) {
+      soundList.splice(index, 1);
+      index = soundList.findIndex((e) => e == '');
     }
     
     soundList.forEach(e => {
@@ -34,17 +42,17 @@ async function UpdateSoundList() {
 function SetActiveSurfer(newActive) {
   if (activeSurfer == newActive) return;
   if (newActive >= surfers.length) return;
-  var previous = activeSurfer;
+  if (!surfers[newActive]) return;
   activeSurfer = parseInt(newActive);
+
+  for (const e of surfersContainer.children) {
+    e.style.opacity = "0";
+    e.style.zIndex = "0";
+  }
   
   var activeDiv = document.querySelector(`#surfers div[surfer_id="${activeSurfer}"]`);
-  var previousDiv = document.querySelector(`#surfers div[surfer_id="${previous}"]`);
-
   activeDiv.style.opacity = "1";
-  previousDiv.style.opacity = "0";
-
   activeDiv.style.zIndex = "100";
-  previousDiv.style.zIndex = "0";
 
   soundnameContainer.innerText = surfers[activeSurfer].options.url.split('/').at(-1).split('.')[0];
 
@@ -56,7 +64,12 @@ function SetActiveSurfer(newActive) {
   activeDiv.classList.add("active");
 }
 
-function AddSurfer(audioPath = "audio/sounds/soulbitch.mp3") {
+function SetFirstSurfer() {
+  if (rowsContainer.children < 1) return;
+  SetActiveSurfer(rowsContainer.children[0]?.attributes.surfer_id.value);
+}
+
+function AddSurfer(audioPath = `${baseUrl}sounds/soulbitch.mp3`) {
   var newSurfer = document.createElement('div');
   newSurfer.setAttribute("surfer_id", surfers.length);
   surfers.push(WaveSurfer.create({
@@ -103,6 +116,15 @@ function AddSurfer(audioPath = "audio/sounds/soulbitch.mp3") {
   })
 }
 
+function DeleteSurfer(surfer_id) {
+  var surferElement = document.querySelector(`#surfers [surfer_id="${surfer_id}"]`);
+  var rowElement = document.querySelector(`#rows [surfer_id="${surfer_id}"]`);
+  surfers[surfer_id] = null;
+  rowElement.remove();
+  surferElement.remove();
+  if (surfer_id == activeSurfer) SetFirstSurfer();
+}
+
 function AddRegion(start = 0.0, end = 0.1) {
 
   if (start > end) {
@@ -138,24 +160,40 @@ function AddRegion(start = 0.0, end = 0.1) {
     var start = Math.round(region.start * 1000);
     var end = Math.round(region.end * 1000);
     region.content.innerText = `Cut ${start} - ${end}`;
+    surfers[activeSurfer].media.currentTime = region.start;
     UpdateResult();
   });
+
+  var region = surfers[activeSurfer].options.plugins[0].regions[0];
+  var start = Math.round(region.start * 1000);
+  var end = Math.round(region.end * 1000);
+  region.content.innerText = `Cut ${start} - ${end}`;
 
   UpdateResult();
 }
 
 function AddRow(name) {
   var row = document.createElement('div');
-  row.innerText = name;
   row.setAttribute("surfer_id", surfers.length - 1);
   row.addEventListener("click", (e) => {
     SetActiveSurfer(row.getAttribute("surfer_id"));
   })
+
+  var label = document.createElement('h5');
+  label.innerText = name;
+  row.appendChild(label);
+
+  var deleteButton = document.createElement('button');
+  deleteButton.addEventListener("click", (e) => {
+    DeleteSurfer(row.getAttribute("surfer_id"));
+  });
+  row.appendChild(deleteButton);
+
   rowsContainer.appendChild(row);
 }
 
 function AddSound(name) {
-  AddSurfer(`audio/sounds/${name}.mp3`);
+  AddSurfer(`${baseUrl}/sounds/${name}.mp3`);
   AddRow(name);
   SetActiveSurfer(surfers.length - 1);
 
@@ -165,6 +203,7 @@ function AddSound(name) {
 function UpdateResult() {
   var text = "!tts";
   surfers.forEach(s => {
+    if (!s) return;
     if (s.plugins[0].regions.length > 0) {
       var region = s.plugins[0].regions[0];
       var start = Math.round(region.start * 1000);
@@ -174,6 +213,14 @@ function UpdateResult() {
     text += ` -${s.options.url.split('/').at(-1).split('.')[0]}`;
   });
   result.innerText = text;
+}
+
+async function CopyCommandToClipboard() {
+  navigator.clipboard.writeText(result.innerText);
+  var toast = document.querySelector("#commandResultToast");
+  toast?.classList.add("visible");
+  await new Promise(r => setTimeout(r, 2000));
+  toast?.classList.remove("visible");
 }
 
 textInput.addEventListener("keydown", (e) => {
@@ -187,16 +234,23 @@ window.addEventListener("wheel", (e) => {
   if (surfers.length < 2) return;
 
   var newActive = activeSurfer;
-  newActive += e.deltaY >= 0 ? 1 : -1;
-  if (newActive < 0) newActive += surfers.length;
-  newActive %= surfers.length;
+  var step = e.deltaY >= 0 ? 1 : -1;
+  do {
+    newActive += step;
+    newActive %= surfers.length;
+    if (newActive < 0) newActive += surfers.length;
+  } while (!surfers[newActive]);
   SetActiveSurfer(newActive);
 });
 
 window.addEventListener("keydown", (e) => {
-  if (isFullPlayback) return;
+  if (isFullPlayback) {
+    isFullPlayback = false;
+    surfers[activeSurfer].media.pause();
+    return;
+  }
   if (e.code != "Space") return;
-  SetActiveSurfer(0);
+  SetFirstSurfer();
   if (surfers[activeSurfer].plugins[0].regions.length > 0) {
     surfers[activeSurfer].plugins[0].regions[0].play();
   } else {
@@ -208,12 +262,17 @@ window.addEventListener("keydown", (e) => {
 
 function FullPlaybackNext() {
   if (!isFullPlayback) return;
-  if (surfers.length - activeSurfer < 2) {
+  if (rowsContainer.lastChild.attributes.surfer_id.value == activeSurfer) {
     isFullPlayback = false;
     return;
   }
 
-  SetActiveSurfer(activeSurfer + 1);
+  var newSurfer = activeSurfer;
+  do {
+    newSurfer += 1;
+  } while (!surfers[newSurfer]);
+  SetActiveSurfer(newSurfer);
+
   if (surfers[activeSurfer].plugins[0].regions.length > 0) {
     surfers[activeSurfer].plugins[0].regions[0].play();
   } else {
