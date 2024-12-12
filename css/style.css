@@ -32,7 +32,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Surfer style
 ------------------------------------------------------------------ */
 
-#surfers div {
+#waveforms div {
     position: absolute;
     width: 100%;
 }
@@ -40,17 +40,17 @@ h1, h2, h3, h4, h5, h6 {
 /* Surfer region style
 ------------------------------------------------------------------ */
 
-#surfers div {
+#waveforms div {
     position: absolute;
     width: 100%;
 }
 
-#surfers ::part(region-handle-right),
-#surfers ::part(region-handle-left) {
+#waveforms ::part(region-handle-right),
+#waveforms ::part(region-handle-left) {
     border-color: #AAA;
 }
 
-#surfers ::part(region) {
+#waveforms ::part(region) {
     background-color: #77777744;
 }
 
