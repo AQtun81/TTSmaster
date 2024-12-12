@@ -58,9 +58,10 @@ h1, h2, h3, h4, h5, h6 {
 ------------------------------------------------------------------ */
 
 #addbar {
+    display: flex;
     margin-top: 20px;
-    height: 80px;
-    padding: 5px;
+    height: 70px;
+    padding: 0;
     border-radius: 5px;
     background-color: #333;
 }
@@ -73,6 +74,36 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     width: 100%;
     font-size: 30px;
+    margin-right: 5px;
+}
+
+#addbar > button {
+    height: 100%;
+    background-color: transparent;
+    aspect-ratio: 1;
+    margin-right: 5px;
+    border: 0;
+    border-radius: 5px;
+    background-size: 24px;
+    background-repeat: no-repeat;
+    background-position: center;
+    user-select: none;
+}
+
+#addbar > button:hover {
+    background-color: var(--accent-color);
+}
+
+#addbar > #addButton {
+    background-image: url("../icon/add.svg");
+}
+
+#addbar > #playButton {
+    background-image: url("../icon/play.svg");
+}
+
+#addbar > *:last-child {
+    margin-right: 0;
 }
 
 /* Row style
@@ -121,15 +152,28 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0;
     aspect-ratio: 1;
     margin: 0;
+    margin-right: 5px;
     border: 0;
-    background-image: url("../icon/delete.svg");
     background-size: 24px;
     background-repeat: no-repeat;
     background-position: center;
+    user-select: none;
 }
 
-#rows > div button:hover {
+#rows > div button.delete {
+    background-image: url("../icon/delete.svg");
+}
+
+#rows > div button.delete:hover {
     background-color: #bf451a;
+}
+
+#rows > div button.toggleBackwards {
+    background-image: url("../icon/backwards.svg");
+}
+
+#rows > div button.active {
+    background-color: var(--accent-color);
 }
 
 /* command result style

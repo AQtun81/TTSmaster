@@ -6,6 +6,7 @@ const textInput = document.querySelector("#addbar > input");
 const result = document.querySelector("#commandResult");
 const soundsDatalist = document.querySelector("#sounds");
 const surfers = [];
+const backwards = [];
 
 var soundList = [];
 var activeSurfer = 0;
@@ -80,6 +81,7 @@ function AddSurfer(audioPath = `${baseUrl}sounds/soulbitch.mp3`) {
     height: 100,
     url: audioPath
   }));
+  backwards.push(false);
   surfersContainer.appendChild(newSurfer);
 
   // play on click
@@ -123,6 +125,7 @@ function DeleteSurfer(surfer_id) {
   rowElement.remove();
   surferElement.remove();
   if (surfer_id == activeSurfer) SetFirstSurfer();
+  UpdateResult();
 }
 
 function AddRegion(start = 0.0, end = 0.1) {
@@ -175,15 +178,31 @@ function AddRegion(start = 0.0, end = 0.1) {
 function AddRow(name) {
   var row = document.createElement('div');
   row.setAttribute("surfer_id", surfers.length - 1);
-  row.addEventListener("click", (e) => {
-    SetActiveSurfer(row.getAttribute("surfer_id"));
-  })
+
+  var toggleBackwardsButton = document.createElement('button');
+  toggleBackwardsButton.classList.add("toggleBackwards");
+  toggleBackwardsButton.addEventListener("click", (e) => {
+    var state = e.target.classList.contains("active");
+    if (state) {
+      e.target.classList.remove("active");
+    } else {
+      e.target.classList.add("active");
+    }
+    backwards[e.target.parentNode.attributes.surfer_id.value] = !state;
+    UpdateResult();
+    e.target.blur();
+  });
+  row.appendChild(toggleBackwardsButton);
 
   var label = document.createElement('h5');
   label.innerText = name;
+  label.addEventListener("click", (e) => {
+    SetActiveSurfer(row.getAttribute("surfer_id"));
+  })
   row.appendChild(label);
 
   var deleteButton = document.createElement('button');
+  deleteButton.classList.add("delete");
   deleteButton.addEventListener("click", (e) => {
     DeleteSurfer(row.getAttribute("surfer_id"));
   });
@@ -201,9 +220,15 @@ function AddSound(name) {
 }
 
 function UpdateResult() {
+  var state_backwards = false;
   var text = "!tts";
-  surfers.forEach(s => {
-    if (!s) return;
+  for (let i = 0; i < surfers.length; i++) {
+    const s = surfers[i];
+    if (!s) continue;
+    if (backwards[i] != state_backwards) {
+      text += ` -b`;
+      state_backwards = !state_backwards;
+    }
     if (s.plugins[0].regions.length > 0) {
       var region = s.plugins[0].regions[0];
       var start = Math.round(region.start * 1000);
@@ -211,7 +236,7 @@ function UpdateResult() {
       text += ` -ck${start}:${end}`;
     }
     text += ` -${s.options.url.split('/').at(-1).split('.')[0]}`;
-  });
+  }
   result.innerText = text;
 }
 
@@ -223,11 +248,31 @@ async function CopyCommandToClipboard() {
   toast?.classList.remove("visible");
 }
 
+function PlaySoundsInSequence() {
+  if (rowsContainer.children.length < 1) return;
+  if (isFullPlayback) {
+    isFullPlayback = false;
+    surfers[activeSurfer].media.pause();
+    return;
+  }
+  SetFirstSurfer();
+  if (surfers[activeSurfer].plugins[0].regions.length > 0) {
+    surfers[activeSurfer].plugins[0].regions[0].play();
+  } else {
+    surfers[activeSurfer].media.currentTime = 0;
+    surfers[activeSurfer].media.play();
+  }
+  isFullPlayback = true;
+}
+
+function AddSoundTextInput() {
+  if (!soundList.includes(textInput.value)) return;
+  AddSound(textInput.value);
+}
+
 textInput.addEventListener("keydown", (e) => {
   if (e.code != "Enter") return;
-  if (!soundList.includes(textInput.value)) return;
-
-  AddSound(textInput.value);
+  AddSoundTextInput();
 })
 
 window.addEventListener("wheel", (e) => {
@@ -244,20 +289,8 @@ window.addEventListener("wheel", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
-  if (isFullPlayback) {
-    isFullPlayback = false;
-    surfers[activeSurfer].media.pause();
-    return;
-  }
   if (e.code != "Space") return;
-  SetFirstSurfer();
-  if (surfers[activeSurfer].plugins[0].regions.length > 0) {
-    surfers[activeSurfer].plugins[0].regions[0].play();
-  } else {
-    surfers[activeSurfer].media.currentTime = 0;
-    surfers[activeSurfer].media.play();
-  }
-  isFullPlayback = true;
+  PlaySoundsInSequence();
 })
 
 function FullPlaybackNext() {
