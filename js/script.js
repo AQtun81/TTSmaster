@@ -40,6 +40,7 @@ function AddWaveform(name = "soulbitch") {
     progressColor: "#3975b5",
     plugins: [region],
     height: 100,
+    backend: "WebAudio",
     url: audioPath
   });
   waveformsContainer.appendChild(newWaveformElement);
@@ -102,7 +103,9 @@ function AddWaveform(name = "soulbitch") {
     } else {
       toggleBackwardsButton.classList.add("active");
     }
-    GetWaveform(toggleBackwardsButton.parentNode.attributes.waveform_id.value).backwards = !state;
+    var index = toggleBackwardsButton.parentNode.attributes.waveform_id.value;
+    GetWaveform(index).backwards = !state;
+    ReverseWaveform(index);
     UpdateResult();
     toggleBackwardsButton.blur();
   });
@@ -128,13 +131,15 @@ function AddWaveform(name = "soulbitch") {
 
   // append to array
   waveforms.push({
+    'id': increment,
     'name': name,
     'waveformElement': newWaveformElement,
     'wavesurfer': newWaveform,
     'region': region,
     'row': row,
     'backwards': false,
-    'id': increment,
+    'canvasWrapper': newWaveform.renderer.wrapper,
+    'progressCanvasWrapper': newWaveform.renderer.progressWrapper,
   });
 
   SetActiveWaveform(increment);
@@ -146,6 +151,9 @@ function SetActiveWaveform(index) {
   if (activeWaveform == index) return;
   waveform = GetWaveform(index);
   if (!waveform) return;
+
+  oldWaveform = GetWaveform(activeWaveform);
+  if (oldWaveform && !oldWaveform.wavesurfer.media.paused) oldWaveform.wavesurfer.media.pause();
 
   activeWaveform = index;
 
@@ -173,6 +181,26 @@ function DeleteWaveform(index) {
   UpdateResult();
   if (waveforms.length < 1) return;
   SetActiveWaveform(waveforms[0].id);
+}
+
+function ReverseWaveform(index) {
+  var waveform = GetWaveform(index);
+  if (!waveform) return;
+
+  // create a new buffer with reversed audio data
+  var sampleRate = waveform.wavesurfer.media.buffer.sampleRate;
+  var audioData = waveform.wavesurfer.media.getChannelData(0)[0].reverse();
+  var audioCtx = waveform.wavesurfer.media.audioContext;
+  var audioBuffer = audioCtx.createBuffer(1, audioData.length, sampleRate);
+  audioBuffer.copyToChannel(audioData, 0);
+
+  // flip the canvas
+  var transformValue = waveform.backwards ? "scale(-1)" : "scale(1)";
+  waveform.canvasWrapper.getElementsByTagName("canvas")[0].style.transform = transformValue;
+  waveform.progressCanvasWrapper.getElementsByTagName("canvas")[0].style.transform = transformValue;
+
+  // replace old buffer with a new one
+  waveform.wavesurfer.media.buffer = audioBuffer;
 }
 
 /* SEQUENCIAL PLAYBACK
@@ -233,6 +261,12 @@ function UpdateResult() {
       var region = w.region.regions[0];
       var start = Math.round(region.start * 1000);
       var end = Math.round(region.end * 1000);
+      if (w.backwards) {
+        var total = Math.round(waveforms[0].wavesurfer.media.duration * 1000);
+        var temp = end;
+        end = total - start;
+        start = total - temp;
+      }
       text += ` -ck${start}:${end}`;
     }
     text += ` -${w.wavesurfer.options.url.split('/').at(-1).split('.')[0]}`;
