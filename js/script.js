@@ -5,6 +5,7 @@ const soundnameContainer = document.getElementById("soundname");
 const textInput = document.querySelector("#addbar > input");
 const result = document.querySelector("#commandResult");
 const soundsDatalist = document.querySelector("#sounds");
+const volumeSlider = document.querySelector("#volumeSlider");
 
 const waveforms = [];
 var activeWaveform = 0;
@@ -142,6 +143,7 @@ function AddWaveform(name = "soulbitch") {
     'progressCanvasWrapper': newWaveform.renderer.progressWrapper,
   });
 
+  newWaveform.media.volume = volumeSlider.value * 0.01;
   SetActiveWaveform(increment);
   increment++;
   UpdateResult();
@@ -290,6 +292,14 @@ function AddSoundTextInput() {
   AddWaveform(textInput.value);
 }
 
+function UpdateVolume() {
+  localStorage.setItem("volume", volumeSlider.value);
+  var newVolume = volumeSlider.value * 0.01;
+  waveforms.forEach(w => {
+    w.wavesurfer.media.volume = newVolume;
+  });
+}
+
 /* SOUND LIST
 --------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -319,8 +329,6 @@ async function UpdateSoundList() {
   }
 }
 
-UpdateSoundList();
-
 /* EVENTS
 --------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -345,3 +353,9 @@ window.addEventListener("keydown", (e) => {
   if (e.code != "Space") return;
   PlaySoundsInSequence();
 })
+
+/* ON LOAD
+--------------------------------------------------------------------------------------------------------------------------------------- */
+
+UpdateSoundList();
+volumeSlider.value = localStorage.getItem("volume");
