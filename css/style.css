@@ -223,6 +223,7 @@ h1, h2, h3, h4, h5, h6 {
     padding-left: 5px;
     align-items: center;
     transition-duration: 0.1s;
+    user-select: none;
 }
 
 #rows > div button {
@@ -252,6 +253,31 @@ h1, h2, h3, h4, h5, h6 {
 
 #rows > div button.active {
     background-color: var(--accent-color);
+}
+
+/* Drag and Drop style
+------------------------------------------------------------------ */
+
+#dropGhost {
+    display: flex;
+    height: 48px !important;
+    background-color: transparent;
+    border-radius: 5ox;
+    border: 1px solid var(--accent-color);
+    align-items: center;
+    justify-content: center;
+    transform: scale(1) !important;
+    background-image: linear-gradient(
+      45deg, 
+      var(--accent-color) 25%, 
+      transparent 25%, 
+      transparent 50%, 
+      var(--accent-color) 50%, 
+      var(--accent-color) 75%, 
+      transparent 75%, 
+      transparent 100%
+      );
+   background-size: 15px 15px;
 }
 
 /* command result style

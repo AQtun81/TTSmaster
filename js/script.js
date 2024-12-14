@@ -6,11 +6,18 @@ const textInput = document.querySelector("#addbar > input");
 const result = document.querySelector("#commandResult");
 const soundsDatalist = document.querySelector("#sounds");
 const volumeSlider = document.querySelector("#volumeSlider");
+const dropGhost = document.querySelector("#dropGhost");
 
 const waveforms = [];
 var activeWaveform = 0;
 var increment = 0;
 var isFullPlayback = false;
+var isDragging = false;
+var dragged = null;
+var mouseX = 0;
+var mouseY = 0;
+var dragStartX = 0;
+var dragStartY = 0;
 
 var soundList = [];
 
@@ -115,8 +122,18 @@ function AddWaveform(name = "soulbitch") {
   // sound name label
   var label = document.createElement('h5');
   label.innerText = name;
-  label.addEventListener("click", (e) => {
+  label.addEventListener("mousedown", async (e) => {
     SetActiveWaveform(row.getAttribute("waveform_id"));
+    isDragging = true;
+
+    await new Promise(r => setTimeout(r, 100));
+    if (!isDragging) return;
+
+    dragged = e.target.parentElement;
+    DragLoop();
+    row.style.display = "none";
+    rowsContainer.appendChild(dropGhost);
+    dropGhost.style.display = "flex";
   })
   row.appendChild(label);
 
@@ -227,7 +244,7 @@ function PlaySoundsInSequence() {
 
 function FullPlaybackNext() {
   if (!isFullPlayback) return;
-  if (rowsContainer.lastChild.attributes.waveform_id.value == activeWaveform) {
+  if (waveforms.at(-1).id == activeWaveform) {
     isFullPlayback = false;
     return;
   }
@@ -300,6 +317,40 @@ function UpdateVolume() {
   });
 }
 
+/* DRAG TO REORDER
+--------------------------------------------------------------------------------------------------------------------------------------- */
+
+function DragLoop() {
+  if (!isDragging) return;
+  requestAnimationFrame(DragLoop);
+
+  var mouseElement = document.elementFromPoint(mouseX, mouseY);
+  if (mouseElement == dropGhost) return;
+
+  while (mouseElement.parentElement) {
+    if (mouseElement.attributes.waveform_id != undefined && mouseElement.parentElement.id == "rows") break;
+    mouseElement = mouseElement.parentElement;
+  }
+
+  if (mouseElement.attributes.waveform_id == undefined) return;
+  var idPreceding = dropGhost.compareDocumentPosition(mouseElement) == Node.DOCUMENT_POSITION_PRECEDING;
+  if (idPreceding) {
+    rowsContainer.insertBefore(dropGhost, mouseElement);
+  } else {
+    rowsContainer.insertBefore(dropGhost, mouseElement.nextSibling);
+  }
+}
+
+function Move(array, from, to) {
+  if (from > to) from -= 1;
+  array.splice(to, 0, array.splice(from, 1)[0]);
+};
+
+function indexOfElement(element, parent) {
+  const children = Array.from(parent.children);
+  return children.indexOf(element);
+}
+
 /* SOUND LIST
 --------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -352,6 +403,32 @@ window.addEventListener("wheel", (e) => {
 window.addEventListener("keydown", (e) => {
   if (e.code != "Space") return;
   PlaySoundsInSequence();
+})
+
+window.addEventListener("mouseup", (e) => {
+  if (isDragging && dragged) {
+
+    var oldIndex = indexOfElement(dragged, rowsContainer);
+
+    rowsContainer.insertBefore(dragged, dropGhost);
+    dragged.style.display = "flex";
+
+    var newIndex = indexOfElement(dragged, rowsContainer);
+    Move(waveforms, oldIndex, newIndex);
+
+    dropGhost.style.display = "none";
+    document.body.appendChild(dropGhost);
+
+    dragged = null;
+    e.preventDefault();
+  }
+  
+  isDragging = false;
+})
+
+window.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
 })
 
 /* ON LOAD
