@@ -44,8 +44,17 @@
     <div id="commandResultToast" class="container">Copied!</div>
     <div id="commandResult" class="container" onclick="CopyCommandToClipboard()"></div>
     
-    <datalist id="sounds">
-    </datalist>
+    <datalist id="sounds"></datalist>
+
+    <button id="openSoundboard" onclick="OpenSoundboard()">Open Soundboard</button>
+    <div id="soundboard">
+        <div class="container">
+            <input type="checkbox" id="soundboardOverlapToggle" onchange="UpdateOverlap()">
+            <input type="search" id="soundboardSearch" placeholder="search" oninput="SearchSounds(soundboardSearch.value)">
+            <button id="closeSoundboard" onclick="CloseSoundboard()"></button>
+        </div>
+        <div id="soundboardSounds"></div>
+    </div>
       
     <div id="dropGhost" style="display: none;">MOVE HERE</div>
 </body>

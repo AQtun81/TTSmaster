@@ -7,6 +7,9 @@ const result = document.querySelector("#commandResult");
 const soundsDatalist = document.querySelector("#sounds");
 const volumeSlider = document.querySelector("#volumeSlider");
 const dropGhost = document.querySelector("#dropGhost");
+const soundboard = document.querySelector("#soundboard");
+const soundboardOverlap = document.querySelector("#soundboardOverlapToggle");
+const soundboardSearch = document.querySelector("#soundboardSearch");
 
 const waveforms = [];
 var activeWaveform = 0;
@@ -20,6 +23,8 @@ var dragStartX = 0;
 var dragStartY = 0;
 
 var soundList = [];
+var audioPlayer = new Audio();
+var soundboardLoaded = false;
 
 /* WAVEFORM FUNCTIONS
 --------------------------------------------------------------------------------------------------------------------------------------- */
@@ -380,6 +385,65 @@ async function UpdateSoundList() {
   }
 }
 
+/* SOUNDBOARD
+--------------------------------------------------------------------------------------------------------------------------------------- */
+
+function LoadSoundboardSounds() {
+  var container = soundboard.querySelector("#soundboardSounds");
+  soundList.forEach(soundname => {
+    var button = document.createElement("button");
+    button.innerText = soundname;
+    button.addEventListener("click", (e) => {
+      SoundboardPlaySound(soundname);
+    })
+    container.appendChild(button);
+  });
+}
+
+async function OpenSoundboard() {
+  if (!soundboardLoaded) {
+    soundboardLoaded = true;
+    LoadSoundboardSounds();
+  }
+  soundboard.style.display = "flex";
+  await new Promise(r => setTimeout(r, 1));
+  soundboard.style.opacity = 1;
+}
+
+async function CloseSoundboard() {
+  if (soundboard.style.display != "flex") return;
+  soundboard.style.opacity = 0;
+  await new Promise(r => setTimeout(r, 200));
+  soundboard.style.display = "none";
+}
+
+function SoundboardPlaySound(name) {
+  if (!audioPlayer.paused && !soundboardOverlap.checked) audioPlayer.pause();
+  audioPlayer = new Audio(`${baseUrl}sounds/${name}.mp3`);
+  audioPlayer.volume = volumeSlider.value * 0.01;
+  audioPlayer.play();
+}
+
+function SearchSounds(query) {
+  var container = soundboard.querySelector("#soundboardSounds");
+  container.innerHTML = "";
+  query = query.toLowerCase();
+  soundList.forEach(sound => {
+    if (sound.search(query) != -1) {
+      var button = document.createElement("button");
+      button.innerText = sound;
+      button.addEventListener("click", (e) => {
+        SoundboardPlaySound(sound);
+      })
+      container.appendChild(button);
+    }
+  });
+}
+
+function UpdateOverlap() {
+  localStorage.setItem("sound-overlap", soundboardOverlap.checked);
+}
+
 /* EVENTS
 --------------------------------------------------------------------------------------------------------------------------------------- */
 
@@ -401,6 +465,7 @@ window.addEventListener("wheel", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if (e.code == "Escape") CloseSoundboard();
   if (e.code != "Space") return;
   PlaySoundsInSequence();
 })
@@ -436,3 +501,4 @@ window.addEventListener("mousemove", (e) => {
 
 UpdateSoundList();
 volumeSlider.value = localStorage.getItem("volume");
+soundboardOverlap.checked = localStorage.getItem("sound-overlap") == "true";
