@@ -10,6 +10,7 @@ const dropGhost = document.querySelector("#dropGhost");
 const soundboard = document.querySelector("#soundboard");
 const soundboardOverlap = document.querySelector("#soundboardOverlapToggle");
 const soundboardSearch = document.querySelector("#soundboardSearch");
+const tooltipText = document.querySelector("#tooltipText");
 
 const waveforms = [];
 var activeWaveform = 0;
@@ -101,6 +102,12 @@ function AddWaveform(name = "soulbitch") {
     UpdateResult();
   });
 
+  region.regionsContainer.addEventListener("mouseup", (e) => {
+    if (e.button != 1) return; // middle click
+    if (region.regions < 1) return;
+    region.regions[0].remove();
+  });
+
   /* Create Row
   --------------------------------------------------------- */
   var row = document.createElement('div');
@@ -123,6 +130,7 @@ function AddWaveform(name = "soulbitch") {
     toggleBackwardsButton.blur();
   });
   row.appendChild(toggleBackwardsButton);
+  RegisterTooltip(toggleBackwardsButton, "Play this sound in reverse");
 
   // sound name label
   var label = document.createElement('h5');
@@ -149,6 +157,7 @@ function AddWaveform(name = "soulbitch") {
     DeleteWaveform(row.getAttribute("waveform_id"));
   });
   row.appendChild(deleteButton);
+  RegisterTooltip(deleteButton, "Delete this sound");
 
   rowsContainer.appendChild(row);
 
@@ -169,6 +178,8 @@ function AddWaveform(name = "soulbitch") {
   SetActiveWaveform(increment);
   increment++;
   UpdateResult();
+  
+  if (waveforms.length >= 1) document.getElementById("playButton").classList.remove("inactive");
 }
 
 function SetActiveWaveform(index) {
@@ -196,14 +207,22 @@ function DeleteWaveform(index) {
   var waveform = GetWaveform(index);
   if (!waveform) return;
 
+  waveform.wavesurfer.destroy();
   waveform.waveformElement.remove();
   waveform.row.remove();
+
+  // hide tooltip if it was visible
+  var mouseLeaveEvent = new Event("mouseleave");
+  waveform.row.querySelector(".delete").dispatchEvent(mouseLeaveEvent);
 
   const position = waveforms.indexOf(waveform);
   waveforms.splice(position, 1);
 
   UpdateResult();
-  if (waveforms.length < 1) return;
+  if (waveforms.length < 1) {
+    document.getElementById("playButton").classList.add("inactive");
+    return;
+  }
   SetActiveWaveform(waveforms[0].id);
 }
 
@@ -319,6 +338,33 @@ function UpdateVolume() {
   var newVolume = volumeSlider.value * 0.01;
   waveforms.forEach(w => {
     w.wavesurfer.media.volume = newVolume;
+  });
+}
+
+async function ShowTooltipText(element, text) {
+  await new Promise(r => setTimeout(r, 500));
+  if (document.elementFromPoint(mouseX, mouseY) != element) return;
+  var rect = element.getBoundingClientRect();
+  tooltipText.innerText = text;
+  tooltipText.style.display = "block";
+  var infoRect = tooltipText.getBoundingClientRect();
+  var top = rect.top;
+  if (top < infoRect.height) top += infoRect.height + rect.height + 20;
+  tooltipText.style.top = `${top - 10}px`;
+  tooltipText.style.left = `${rect.left}px`;
+  tooltipText.style.marginLeft = `${-infoRect.width / 2 + rect.width / 2}px`;
+}
+
+function HideTooltipText() {
+  tooltipText.style.display = "none";
+}
+
+function RegisterTooltip(element, text) {
+  element.addEventListener("mouseenter", (e) => {
+    ShowTooltipText(element, text);
+  });
+  element.addEventListener("mouseleave", (e) => {
+    HideTooltipText();
   });
 }
 
@@ -502,3 +548,7 @@ window.addEventListener("mousemove", (e) => {
 UpdateSoundList();
 volumeSlider.value = localStorage.getItem("volume");
 soundboardOverlap.checked = localStorage.getItem("sound-overlap") == "true";
+
+document.querySelectorAll("[tooltip]").forEach(element => {
+  RegisterTooltip(element, element.attributes.tooltip.value);
+});

@@ -37,26 +37,27 @@
     </div>
     <div id="addbar" class="container">
         <input type="text" list="sounds" placeholder="sound effect">
-        <button id="addButton" onclick="AddSoundTextInput()"></button>
-        <button id="playButton" onclick="PlaySoundsInSequence()"></button>
+        <button id="addButton" onclick="AddSoundTextInput()" tooltip="Add a matching sound from the text input [Enter]"></button>
+        <button id="playButton" class="inactive" onclick="PlaySoundsInSequence()" tooltip="Play all sounds in sequence [Space]"></button>
     </div>
     <div id="rows" class="container"></div>
     <div id="commandResultToast" class="container">Copied!</div>
-    <div id="commandResult" class="container" onclick="CopyCommandToClipboard()"></div>
+    <div id="commandResult" class="container" onclick="CopyCommandToClipboard()" tooltip="generated tts command, you can click it to copy it to clipboard"></div>
     
     <datalist id="sounds"></datalist>
 
     <button id="openSoundboard" onclick="OpenSoundboard()">Open Soundboard</button>
     <div id="soundboard">
         <div class="container">
-            <input type="checkbox" id="soundboardOverlapToggle" onchange="UpdateOverlap()">
+            <input type="checkbox" id="soundboardOverlapToggle" onchange="UpdateOverlap()" tooltip="Enable soundboard sound overlapping">
             <input type="search" id="soundboardSearch" placeholder="search" oninput="SearchSounds(soundboardSearch.value)">
-            <button id="closeSoundboard" onclick="CloseSoundboard()"></button>
+            <button id="closeSoundboard" onclick="CloseSoundboard()" tooltip="Close the soundboard [Escape]"></button>
         </div>
         <div id="soundboardSounds"></div>
     </div>
       
     <div id="dropGhost" style="display: none;">MOVE HERE</div>
+    <div id="tooltipText" style="display: none;">INFO TEXT</div>
 </body>
 
 </html>
