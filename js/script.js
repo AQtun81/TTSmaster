@@ -71,7 +71,9 @@ function AddWaveform(name = "soulbitch") {
 
   // waveform - play in sequence
   newWaveform.media.addEventListener("ended", (e) => {
-    FullPlaybackNext();
+    if (region.regions.length == 0) {
+      FullPlaybackNext();
+    }
   })
 
   // rehion settings and events
@@ -252,8 +254,8 @@ function ReverseWaveform(index) {
 function PlaySoundsInSequence() {
   if (rowsContainer.children.length < 1) return;
   if (isFullPlayback) {
-    isFullPlayback = false;
     GetWaveform(activeWaveform).wavesurfer.media.pause();
+    isFullPlayback = false;
     return;
   }
   SetActiveWaveform(waveforms[0].id);
@@ -269,6 +271,7 @@ function PlaySoundsInSequence() {
 function FullPlaybackNext() {
   if (!isFullPlayback) return;
   if (waveforms.at(-1).id == activeWaveform) {
+    waveforms.at(-1).wavesurfer.media.pause();
     isFullPlayback = false;
     return;
   }
@@ -531,6 +534,7 @@ window.addEventListener("mouseup", (e) => {
     document.body.appendChild(dropGhost);
 
     dragged = null;
+    UpdateResult();
     e.preventDefault();
   }
   
